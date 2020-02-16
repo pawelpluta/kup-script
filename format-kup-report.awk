@@ -10,7 +10,7 @@ function extensionOf(filePath) {
 }
 
 function isSourceCode(ext) {
-  return ext=="java" || ext="html" || ext="htm" || ext="js" || ext="jsx" || ext="ts" || ext="tsx"
+  return ext=="java" || ext="html" || ext="htm" || ext="js" || ext="jsx" || ext="ts" || ext="tsx" || ext="less"
 }
 
 function isProperties(ext) {
