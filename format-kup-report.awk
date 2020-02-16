@@ -10,11 +10,11 @@ function extensionOf(filePath) {
 }
 
 function isSourceCode(ext) {
-  return ext=="java"
+  return ext=="java" || ext="html" || ext="htm" || ext="js" || ext="jsx" || ext="ts" || ext="tsx"
 }
 
 function isProperties(ext) {
-  return ext=="yml" || ext=="yaml" || ext=="properties" || ext=="xml" || ext="conf"
+  return ext=="yml" || ext=="yaml" || ext=="properties" || ext=="xml" || ext="conf" || ext="css" || ext="scss"
 }
 
 function isScript(ext) {
