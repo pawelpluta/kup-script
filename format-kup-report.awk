@@ -1,6 +1,12 @@
 function determineProjectFor(filePath) {
-  projectNameStringStart=index(filePath, "/_git/") + 6
+  projectNameStringStart=0
   projectNameStringStop=index(filePath, "?path=")
+  for(textOffsetToCheck = projectNameStringStop - 1; textOffsetToCheck >=0; textOffsetToCheck--) {
+    if (substr(filePath, textOffsetToCheck, 1) == "/") {
+      projectNameStringStart = textOffsetToCheck
+      break
+    }
+  }
   return substr(filePath, projectNameStringStart, (projectNameStringStop - projectNameStringStart))
 }
 
