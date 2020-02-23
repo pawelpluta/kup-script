@@ -15,57 +15,72 @@ function extensionOf(filePath) {
   return filePathElements[elementsCount]
 }
 
-function isSourceCode(ext) {
+function isSourceCode(filePath) {
+  ext=extensionOf(filePath)
   return ext=="java" || ext="html" || ext="htm" || ext="js" || ext="jsx" || ext="ts" || ext="tsx" || ext="less"
 }
 
-function isProperties(ext) {
+function isProperties(filePath) {
+  ext=extensionOf(filePath)
   return ext=="yml" || ext=="yaml" || ext=="properties" || ext=="xml" || ext="conf" || ext="css" || ext="scss"
 }
 
-function isScript(ext) {
+function isScript(filePath) {
+  ext=extensionOf(filePath)
   return ext=="ps1" || ext=="gradle"
 }
 
-function isDevelopmentType(ext) {
-  return isSourceCode(ext) || isProperties(ext) || isScript(ext)
+function isDevelopmentType(filePath) {
+  ext=extensionOf(filePath)
+  return isSourceCode(filePath) || isProperties(filePath) || isScript(filePath)
 }
 
-function isAutomatedTestingType(ext) {
-  return ext=="groovy"
+function isAutomatedTestingType(filePath) {
+  return isJavaTestType(filePath) || isJSTestType(filePath)
 }
 
-function isDocumentationType(ext) {
+function isJavaTestType(filePath) {
+  ext=extensionOf(filePath)
+  isTestDirectory=index(filePath,"src/test") > 0
+  return isTestDirectory && (ext=="groovy" || ext=="java")
+}
+
+function isJSTestType(filePath) {
+  elementsCount=split(filePath, filePathElements, ".")
+  return filePathElements[elementsCount-1]=="spec"
+}
+
+function isDocumentationType(filePath) {
+  ext=extensionOf(filePath)
   return ext=="md"
 }
 
 function determineTypeOf(filePath) {
   ext=extensionOf(filePath)
-  if (isDevelopmentType(ext)) {
-    return "programowanie"
-  } else if (isAutomatedTestingType(ext)) {
+  if (isAutomatedTestingType(filePath)) {
     return "testy automatyczne"
-  } else if (isDocumentationType(ext)) {
+  } else if (isDevelopmentType(filePath)) {
+    return "programowanie"
+  } else if (isDocumentationType(filePath)) {
     return "dokumentacja projektowa"
   } else {
     return "programowanie"
   }
 }
 
-function determineKindOf(modificationType,filePath) {
+function determineKindOf(modificationType, filePath) {
   isNewFile=modificationType=="A"
-  ext=extensionOf(filePath)
-  if(isNewFile && isSourceCode(ext)) {
+  if(isNewFile && isSourceCode(filePath)) {
     return "Plik źródłowy z kodem nowego modułu aplikacji"
-  } else if (isSourceCode(ext)) {
-    return "Plik źródłowy z kodem usprawnienia zmieniającego działanie funkcji w aplikacji"
-  } else if (isProperties(ext)) {
-    return "Plik źródłowy zawierający zmienne i skrypty konfigurujące oprogramowanie"
-  } else if (isScript(ext)) {
-    return "Plik źródłowy zawierający skrypt wdrożeniowy"
-  } else if (isAutomatedTestingType(ext)) {
+  } else if (isAutomatedTestingType(filePath)) {
     return "Plik źródłowy z kodem testu automatycznego"
-  } else if (isDocumentationType(ext)) {
+  } else if (isSourceCode(filePath)) {
+    return "Plik źródłowy z kodem usprawnienia zmieniającego działanie funkcji w aplikacji"
+  } else if (isProperties(filePath)) {
+    return "Plik źródłowy zawierający zmienne i skrypty konfigurujące oprogramowanie"
+  } else if (isScript(filePath)) {
+    return "Plik źródłowy zawierający skrypt wdrożeniowy"
+  } else if (isDocumentationType(filePath)) {
     return "Dokumentacja techniczna i specyfikacja"
   } else {
     return "Kody źródłowe programów komputerowych, aplikacji mobilnych, webowych"
