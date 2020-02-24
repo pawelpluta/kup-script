@@ -3,7 +3,7 @@ function determineProjectFor(filePath) {
   projectNameStringStop=index(filePath, "?path=")
   for(textOffsetToCheck = projectNameStringStop - 1; textOffsetToCheck >=0; textOffsetToCheck--) {
     if (substr(filePath, textOffsetToCheck, 1) == "/") {
-      projectNameStringStart = textOffsetToCheck
+      projectNameStringStart = textOffsetToCheck + 1
       break
     }
   }
