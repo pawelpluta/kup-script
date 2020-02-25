@@ -8,7 +8,12 @@ function findRepositoryBasePath() {
 
 function findCommiter() {
   cd "$1"
-  git config --get user.name
+  commiterName=$(git config --get user.name)
+  if [[ $commiterName = "" ]];
+  then
+    commiterName=$(git config --get user.email | cut -f1 -d"@")
+  fi
+  echo "$commiterName"
 }
 
 executionPath=$(pwd)
