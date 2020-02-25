@@ -1,2 +1,2 @@
 #!/bin/bash
-< gitAggregatedOutput.tmp awk -f format-kup-report.awk > kupReportData.csv
+< gitAggregatedOutput.tmp awk -F "\t" -f format-kup-report.awk > kupReportData.csv
