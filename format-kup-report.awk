@@ -96,9 +96,9 @@ function shouldBeIncludedInKUP(modificationType, linesChanged) {
   return modificationType == "A" || linesChanged >= 6
 }
 
-BEGIN {}
+BEGIN {numberOfCurrentRow=1}
 {
   if (shouldBeIncludedInKUP($1, $3)) {
-    printf "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", determineProjectFor($4), determineTypeOf($4), determineKindOf($1,$4), extractFileNameFrom($4), $2, $4
+    printf "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", numberOfCurrentRow++, determineProjectFor($4), determineTypeOf($4), determineKindOf($1,$4), extractFileNameFrom($4), $2, $4
   }
 }
