@@ -96,8 +96,15 @@ function shouldBeIncludedInKUP(modificationType, linesChanged) {
   return modificationType == "A" || linesChanged >= 6
 }
 
+function includeHeaderRow(numberOfCurrentRow){
+  if(numberOfCurrentRow == 1) {
+    printf "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", "Lp.", "Projekt", "Rodzaj działalności twórczej", "Rodzaj utworu", "Nazwa utworu", "Data powstania utworu", "Miejsce przechowywania utworu"
+  }
+}
+
 BEGIN {numberOfCurrentRow=1}
 {
+  includeHeaderRow(includeHeaderRow)
   if (shouldBeIncludedInKUP($1, $3)) {
     printf "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", numberOfCurrentRow++, determineProjectFor($4), determineTypeOf($4), determineKindOf($1,$4), extractFileNameFrom($4), $2, $4
   }
