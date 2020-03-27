@@ -93,7 +93,7 @@ function extractFileNameFrom(filePath) {
 }
 
 function shouldBeIncludedInKUP(modificationType, linesChanged) {
-  return modificationType == "A" || linesChanged >= 6
+  return modificationType == "A" || linesChanged >= 1
 }
 
 function includeHeaderRow(){
