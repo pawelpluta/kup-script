@@ -1,0 +1,43 @@
+Attribute VB_Name = "Main"
+Option Explicit
+Public user As New user
+
+
+Function getReportTemplate() As reportTemplate
+    Dim existingTemplate As Document
+    Set existingTemplate = existingTemplateDocument
+
+    Dim template As New reportTemplate
+    
+    If existingTemplate Is Nothing Then
+        Dim aEmployee As New Employee
+        aEmployee.gatherInfo
+        If Not aEmployee.hasAllRequiredInfo Then
+            Exit Function
+        End If
+        template.createFor aEmployee
+    Else
+        Set template.file = existingTemplate
+    End If
+    
+    Set getReportTemplate = template
+End Function
+
+
+Private Function existingTemplateDocument() As Document
+    Dim fileName As String, basePath As String
+    
+    basePath = ThisDocument.path & "/templates"
+    fileName = Dir(basePath)
+    
+    Do Until fileName = ""
+        If fileName Like "YYYY-MM_*.doc" Then
+            Set existingTemplateDocument = Documents.Open(basePath & "/" & fileName)
+            Exit Function
+        End If
+        
+        fileName = Dir
+    Loop
+    
+    Set existingTemplateDocument = Nothing
+End Function

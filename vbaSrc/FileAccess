@@ -1,0 +1,43 @@
+Attribute VB_Name = "FileAccess"
+Option Explicit
+
+Sub createDirectoryIfNotExists(directory As String)
+    On Error Resume Next
+    MkDir directory
+    On Error GoTo 0
+End Sub
+
+Sub removeDirectoryAndContents(directory As String)
+    Dim file As String
+    file = Dir(directory)
+    Do Until file = ""
+        Kill directory & "/" & file
+        file = Dir
+    Loop
+    
+    On Error Resume Next
+    RmDir directory
+    On Error GoTo 0
+End Sub
+
+Sub clearArguments()
+    removeDirectoryAndContents ThisDocument.path & "/.args"
+End Sub
+
+Function readArgumentFile(argumentName As String) As String
+    Dim argFilePath As String
+    argFilePath = ThisDocument.path & "/.args/" & argumentName
+    
+    If Dir(argFilePath) = "" Then
+        readArgumentFile = ""
+        Exit Function
+    End If
+
+    Dim file As Long
+    file = FreeFile
+    
+    Open argFilePath For Input As #file
+    Input #file, readArgumentFile
+    Close #file
+End Function
+

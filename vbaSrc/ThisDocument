@@ -1,0 +1,49 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ThisDocument"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Dim runningInExportMode As Boolean
+
+Private Sub Document_Open()
+    Dim reportStartDate As String, reportEndDate As String
+    reportStartDate = readArgumentFile("startDate")
+    reportEndDate = readArgumentFile("endDate")
+    
+    If reportStartDate <> "" And reportEndDate <> "" Then
+        runningInExportMode = True
+        
+        Dim template As reportTemplate
+        Set template = getReportTemplate
+        If Not template Is Nothing Then
+            template.fillOut reportStartDate, reportEndDate
+            template.file.Close
+            
+            clearArguments
+        End If
+        
+        ThisDocument.Close
+    End If
+End Sub
+
+Private Sub Document_Close()
+    If Not runningInExportMode And Not isTemplateFile Then
+    
+        If canAccessModules Then
+            exportAllModules
+        Else
+            MsgBox "If you made changes to any of the vba modules you should enable trusting access to VBA code so that changes can be exported. " _
+                & "See: https://support.microsoft.com/en-us/help/282830/programmatic-access-to-office-vba-project-is-denied"
+        End If
+    End If
+End Sub
+
+Private Function isTemplateFile()
+    isTemplateFile = ThisDocument.fullName Like "*templates*"
+End Function
+
+

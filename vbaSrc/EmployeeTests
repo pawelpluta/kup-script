@@ -1,0 +1,91 @@
+Attribute VB_Name = "EmployeeTests"
+Option Explicit
+
+Sub runEmployeeTests()
+    shouldPromptTheUserForInput
+    shouldHandleCancel
+    shouldConstructFullName
+    shouldConstructShortName
+    shouldConstructSupervisorFullName
+End Sub
+
+Sub shouldPromptTheUserForInput()
+arrange:
+    Set user = New mockUser
+
+    Dim aEmployee As New Employee
+    
+act:
+    aEmployee.gatherInfo
+    
+assert:
+    Debug.Assert aEmployee.name <> ""
+    Debug.Assert aEmployee.surname <> ""
+    Debug.Assert aEmployee.supervisorName <> ""
+    Debug.Assert aEmployee.supervisorSurname <> ""
+    Debug.Assert aEmployee.organisationalUnit <> ""
+    
+    Debug.Assert aEmployee.hasAllRequiredInfo
+    
+    Set user = Nothing
+End Sub
+
+Sub shouldHandleCancel()
+arrange:
+    Dim mockUser As New mockUser
+    mockUser.willRespondTo "Input your first name", ""
+    Set user = mockUser
+    
+    
+    Dim aEmployee As New Employee
+    
+act:
+    aEmployee.gatherInfo
+    
+assert:
+    Debug.Assert Not aEmployee.hasAllRequiredInfo
+    
+    Set user = Nothing
+End Sub
+
+Sub shouldConstructFullName()
+arrange:
+    Set user = New mockUser
+    Dim aEmployee As New Employee
+    aEmployee.gatherInfo
+    
+act:
+    Dim fullName As String
+    fullName = aEmployee.fullName
+    
+assert:
+    Debug.Assert fullName = "John Doe (Contoso)"
+End Sub
+
+Sub shouldConstructShortName()
+arrange:
+    Set user = New mockUser
+    Dim aEmployee As New Employee
+    aEmployee.gatherInfo
+    
+act:
+    Dim shortName As String
+    shortName = aEmployee.shortName
+    
+assert:
+    Debug.Assert shortName = "jdoe"
+End Sub
+
+Sub shouldConstructSupervisorFullName()
+arrange:
+    Set user = New mockUser
+    Dim aEmployee As New Employee
+    aEmployee.gatherInfo
+    
+act:
+    Dim supervisorFullName As String
+    supervisorFullName = aEmployee.supervisorFullName
+    
+assert:
+    Debug.Assert supervisorFullName = "Jane Foo"
+End Sub
