@@ -1,0 +1,201 @@
+Attribute VB_Name = "MainTests"
+Option Explicit
+
+Sub runTests()
+    shouldCreateTemplateFileIfItDoesNotExistYet
+    shouldUseExistingTemplate
+    shouldCloseFilesWhenTerminating
+    shouldFillOutTheReport
+    
+    runEmployeeTests
+    runReflectionTests
+    runFileAccessTests
+    
+    MsgBox "Tests complete"
+End Sub
+
+Sub shouldCreateTemplateFileIfItDoesNotExistYet()
+arrange:
+    removeDirectoryAndContents ThisDocument.path & "/templates"
+    
+    Dim expectedTemplatePath  As String
+    expectedTemplatePath = ThisDocument.path & "/templates/YYYY-MM_jdoe.doc"
+    
+    Set user = New mockUser
+    
+act:
+    Dim template As reportTemplate
+    Set template = getReportTemplate()
+    template.file.Close False
+    
+assert:
+    Debug.Assert Not template Is Nothing
+    
+    Dim templateDocument As Document
+    Set templateDocument = Documents.Add(expectedTemplatePath)
+    
+    Debug.Assert Not templateDocument Is Nothing
+    Debug.Assert templateDocument.Bookmarks("EMPLOYEE_NAME").Range.text = "John Doe (Contoso)"
+    Debug.Assert templateDocument.Bookmarks("SUPERVISOR_NAME").Range.text = "Jane Foo"
+    Debug.Assert templateDocument.Bookmarks("CONTRACT_START_DATE").Range.text = "2010-01-01"
+    
+    templateDocument.Close False
+    
+    removeDirectoryAndContents ThisDocument.path & "/templates"
+    
+End Sub
+
+Sub shouldUseExistingTemplate()
+arrange:
+    Dim existingTemplatePath  As String
+    existingTemplatePath = pathOfAnExistingTemplate()
+    
+act:
+    Dim template As reportTemplate
+    Set template = getReportTemplate()
+    
+assert:
+    Debug.Assert Not template Is Nothing
+    Debug.Assert template.file.fullName = existingTemplatePath
+    Set template = Nothing
+    
+    removeDirectoryAndContents ThisDocument.path & "/templates"
+End Sub
+
+Sub shouldCloseFilesWhenTerminating()
+arrange:
+    Dim existingTemplatePath  As String
+    existingTemplatePath = pathOfAnExistingTemplate()
+    
+    Dim numberOfOriginallyOpenFiles As Long
+    numberOfOriginallyOpenFiles = Documents.Count
+    
+act:
+    Dim template As reportTemplate
+    Set template = getReportTemplate()
+    Set template = Nothing
+    
+assert:
+    Debug.Assert Documents.Count = numberOfOriginallyOpenFiles
+    
+    removeDirectoryAndContents ThisDocument.path & "/templates"
+End Sub
+
+Sub shouldFillOutTheReport()
+arrange:
+    removeDirectoryAndContents ThisDocument.path & "/output"
+    
+    Dim startDate As String, endDate As String
+    startDate = "2020-01-28"
+    endDate = "2020-02-25"
+    
+    argFilesContain startDate, endDate
+    changesHaveBeenCopiedToClipboard
+    
+    Dim existingTemplatePath  As String
+    existingTemplatePath = pathOfAnExistingTemplate()
+    
+    Dim template As reportTemplate
+    Set template = getReportTemplate()
+     
+act:
+    template.fillOut startDate, endDate
+    
+assert:
+    changesHaveBeenAddedTo template.file
+    datesHaveBeenFilledOutIn template.file, startDate, endDate
+    reportHasBeenSavedAs "2020-02_foobar.pdf"
+    
+    Set template = Nothing
+    
+    removeDirectoryAndContents ThisDocument.path & "/templates"
+    removeDirectoryAndContents ThisDocument.path & "/output"
+End Sub
+
+Private Function pathOfAnExistingTemplate() As String
+    createDirectoryIfNotExists ThisDocument.path & "/templates"
+
+    Dim existingTemplatePath  As String
+    existingTemplatePath = ThisDocument.path & "/templates/YYYY-MM_foobar.doc"
+
+    Dim existingTemplateFile As Document
+    Set existingTemplateFile = Documents.Add(ThisDocument.fullName)
+    existingTemplateFile.SaveAs2 existingTemplatePath
+    existingTemplateFile.Close
+    
+    pathOfAnExistingTemplate = existingTemplatePath
+End Function
+
+Private Sub changesHaveBeenCopiedToClipboard()
+    Dim tempDocument As Document
+    Set tempDocument = Documents.Add
+    
+    tempDocument.Content.text = _
+    """Lp."",""Projekt"",""Rodzaj dzia¸alnoæci tw—rczej"",""Rodzaj utworu"",""Nazwa utworu"",""Data powstania utworu"",""Miejsce przechowywania utworu""" _
+    & vbNewLine & _
+    """1"",""project"",""work type"",""file type"",""file name"",""date"",""file path"""
+
+    tempDocument.Content.copy
+    tempDocument.Close False
+End Sub
+
+Private Sub argFilesContain(startDate As String, endDate As String)
+    Dim file As Long, tmpPath As String
+    tmpPath = ThisDocument.path & "/.args"
+    
+    On Error Resume Next
+    MkDir tmpPath
+    On Error GoTo 0
+    
+    file = FreeFile
+    Open tmpPath & "/startDate" For Output As #file
+    Print #file, startDate
+    Close #file
+    
+    file = FreeFile
+    Open tmpPath & "/endDate" For Output As #file
+    Print #file, endDate
+    Close #file
+
+End Sub
+
+Private Sub changesHaveBeenAddedTo(Document As Document)
+    Debug.Assert Document.Tables.Count = 1
+    
+    If Document.Tables.Count = 1 Then
+        Dim changesTable As table
+        Set changesTable = Document.Tables(1)
+        
+        contentIsPresentIn changesTable
+        bordersAreEnabledIn changesTable
+        columnWidthsAreAdjustedIn changesTable
+    End If
+End Sub
+
+Private Sub contentIsPresentIn(changesTable As table)
+    Debug.Assert changesTable.Cell(2, 2).Range.text Like "*project*"
+    Debug.Assert Not changesTable.Cell(2, 2).Range.text Like "*""*"
+End Sub
+
+Private Sub bordersAreEnabledIn(changesTable As table)
+    With changesTable.borders
+        Debug.Assert .InsideLineStyle = Options.DefaultBorderLineStyle
+        Debug.Assert .OutsideLineStyle = Options.DefaultBorderLineStyle
+    End With
+End Sub
+
+Private Sub columnWidthsAreAdjustedIn(changesTable As table)
+    Debug.Assert changesTable.Columns(1).Width < changesTable.Columns(2).Width
+End Sub
+
+Private Sub datesHaveBeenFilledOutIn(Document As Document, startDate As String, endDate As String)
+    Debug.Assert Document.Bookmarks("REPORT_START_DATE").Range.text = startDate
+    Debug.Assert Document.Bookmarks("REPORT_END_DATE").Range.text = endDate
+    Debug.Assert Document.Bookmarks("CURRENT_DATE").Range.text = format(Date, "yyyy-mm-dd")
+End Sub
+
+Private Sub reportHasBeenSavedAs(expectedFileName As String)
+    Debug.Assert Dir(ThisDocument.path & "/output/" & expectedFileName) = expectedFileName
+End Sub
+
+

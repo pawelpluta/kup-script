@@ -1,0 +1,50 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "MockUser"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+
+Implements user
+
+Private responses As New Collection
+
+Private Sub Class_Initialize()
+    willRespondTo "Input your first name", "John"
+    willRespondTo "Input your surname", "Doe"
+    willRespondTo "Input your organisational unit (e.g. YIAID)", "Contoso"
+    willRespondTo "Input the first name of your supervisor", "Jane"
+    willRespondTo "Input the surname of your supervisor", "Foo"
+    willRespondTo "Input start date of your employment contract (e.g. 2019-05-15)", "2010-01-01"
+End Sub
+
+Sub willRespondTo(prompt As String, response As String)
+    If hasResponseFor(prompt) Then
+        responses.remove prompt
+    End If
+    
+    responses.Add response, prompt
+End Sub
+
+Private Sub User_inform(text As String)
+End Sub
+
+Private Function User_getInput(prompt As String) As Variant
+    If hasResponseFor(prompt) Then
+        User_getInput = responses.Item(prompt)
+    Else
+        User_getInput = ""
+    End If
+End Function
+
+Private Function hasResponseFor(prompt) As Boolean
+    On Error Resume Next
+    hasResponseFor = responses.Item(prompt) <> ""
+    Err.Clear
+    On Error GoTo 0
+End Function
+

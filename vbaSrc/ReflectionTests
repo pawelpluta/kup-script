@@ -1,0 +1,43 @@
+Attribute VB_Name = "ReflectionTests"
+Option Explicit
+
+Sub runReflectionTests()
+    shouldExportAllModules
+End Sub
+
+Sub shouldExportAllModules()
+arrange:
+    removeDirectoryAndContents expectedSourcesPath
+    
+act:
+    exportAllModules
+    
+assert:
+    Debug.Assert numberOfExportedModules > 0
+    Debug.Assert contentOfExported("Employee") Like "*Input your first name*"
+End Sub
+
+Private Function numberOfExportedModules() As Long
+    Dim moduleFile As String, countOfModules As Long
+    moduleFile = Dir(expectedSourcesPath)
+    numberOfExportedModules = 0
+    
+    Do Until moduleFile = ""
+        numberOfExportedModules = numberOfExportedModules + 1
+        moduleFile = Dir
+    Loop
+End Function
+
+Private Function contentOfExported(moduleName As String) As String
+    Dim file As Long
+    file = FreeFile
+    
+    Open expectedSourcesPath & "/" & moduleName For Input As #file
+    contentOfExported = Input(LOF(file), file)
+    Close #file
+End Function
+
+Private Function expectedSourcesPath()
+    expectedSourcesPath = ThisDocument.path & "/vbaSrc"
+End Function
+

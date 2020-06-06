@@ -1,0 +1,24 @@
+Attribute VB_Name = "Reflection"
+Option Explicit
+
+Sub exportAllModules()
+    Dim srcDirectory As String
+    srcDirectory = ThisDocument.path & "/vbaSrc"
+
+    removeDirectoryAndContents srcDirectory
+    createDirectoryIfNotExists srcDirectory
+    
+    Dim module As Object
+    For Each module In ThisDocument.VBProject.VBComponents
+        module.Export srcDirectory & "/" & module.name
+    Next module
+End Sub
+
+Function canAccessModules()
+    On Error Resume Next
+    Dim countOfModules As Long
+    countOfModules = ThisDocument.VBProject.VBComponents.Count
+    
+    canAccessModules = Not Err.Number = 6068
+    Err.Clear
+End Function

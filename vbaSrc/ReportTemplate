@@ -1,0 +1,90 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ReportTemplate"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+
+Public file As Document
+
+Public Sub createFor(aEmployee As Employee)
+    createDirectoryIfNotExists ThisDocument.path & "/templates"
+
+    Dim templatePath As String
+    templatePath = ThisDocument.path & "/templates/YYYY-MM_" & aEmployee.shortName & ".doc"
+    
+    Dim copy As Document
+    Set copy = Documents.Add(ThisDocument.fullName)
+    updateBookmark copy, "EMPLOYEE_NAME", aEmployee.fullName
+    updateBookmark copy, "SUPERVISOR_NAME", aEmployee.supervisorFullName
+    updateBookmark copy, "CONTRACT_START_DATE", aEmployee.contractStartDate
+    copy.SaveAs2 templatePath
+    
+    Set file = copy
+End Sub
+
+Public Sub fillOut(startDate As String, endDate As String)
+    fillOutChanges
+    fillOutDates startDate, endDate
+    exportAsPdf endDate
+End Sub
+
+Private Sub updateBookmark(documentToUpdate As Document, bookmarkToUpdate As String, textToUse As String)
+    Dim BMRange As Range
+    Set BMRange = documentToUpdate.Bookmarks(bookmarkToUpdate).Range
+    BMRange.text = textToUse
+    documentToUpdate.Bookmarks.Add bookmarkToUpdate, BMRange
+End Sub
+
+Private Sub fillOutChanges()
+    Dim changesRange As Range
+    Set changesRange = file.Bookmarks("CHANGES").Range
+    
+    ' this assumes that the changes have been copied to the clipboard prior to opening this file
+    changesRange.Paste
+    changesRange.ConvertToTable ","
+    changesRange.Find.Execute FindText:="""", Replace:=wdReplaceAll, ReplaceWith:=""
+    
+    With changesRange.Tables(1)
+        .Columns(1).AutoFit
+        .borders.InsideLineStyle = Options.DefaultBorderLineStyle
+        .borders.OutsideLineStyle = Options.DefaultBorderLineStyle
+    End With
+End Sub
+
+Private Sub fillOutDates(startDate As String, endDate As String)
+    Dim currentDate As String
+    currentDate = format(Date, "yyyy-mm-dd")
+    
+    updateBookmark file, "REPORT_START_DATE", startDate
+    updateBookmark file, "REPORT_END_DATE", endDate
+    updateBookmark file, "CURRENT_DATE", currentDate
+End Sub
+
+Private Sub exportAsPdf(endDate As String)
+    createDirectoryIfNotExists ThisDocument.path & "/output"
+    file.SaveAs2 fileName:=reportFileName(endDate), FileFormat:=wdFormatPDF
+End Sub
+
+Private Function reportFileName(endDate As String) As String
+    Dim splitted() As String
+    splitted = Split(endDate, "-")
+    
+    Dim reportName As String
+    reportName = file.fullName
+    reportName = Replace(reportName, "YYYY", splitted(0))
+    reportName = Replace(reportName, "MM", splitted(1))
+    reportName = Replace(reportName, ".doc", ".pdf")
+    reportName = Replace(reportName, "/templates/", "/output/")
+    
+    reportFileName = reportName
+End Function
+
+Private Sub Class_Terminate()
+    On Error Resume Next
+    file.Close False
+End Sub

@@ -1,0 +1,143 @@
+Attribute VB_Name = "FileAccessTests"
+Option Explicit
+
+Public Sub runFileAccessTests()
+    shouldCreateDirectoryIfNotExists
+    shouldNotThrowErrorIfDirectoryExists
+    shouldRemoveDirectoryWithContents
+    shouldNotThrowErrorIfDirectoryToRemoveWasAlreadyRemoved
+    shouldReadArgumentFromFile
+    shouldReturnEmptyStringIfArgumentDoesNotExist
+    shouldClearArgumentFiles
+End Sub
+ 
+Sub shouldCreateDirectoryIfNotExists()
+arrange:
+    Dim directoryToCreate As String
+    directoryToCreate = ThisDocument.path & "/foobar"
+    
+    remove directoryToCreate
+    
+act:
+    createDirectoryIfNotExists directoryToCreate
+    
+assert:
+    Debug.Assert exists(ThisDocument.path, "foobar")
+    remove directoryToCreate
+End Sub
+
+Sub shouldNotThrowErrorIfDirectoryExists()
+arrange:
+    Dim directoryToCreate As String
+    directoryToCreate = ThisDocument.path & "/foobar"
+    
+    On Error Resume Next
+    remove directoryToCreate
+    MkDir directoryToCreate
+    On Error GoTo 0
+    
+act:
+    createDirectoryIfNotExists directoryToCreate
+    
+assert:
+    Debug.Assert exists(ThisDocument.path, "foobar")
+    remove directoryToCreate
+End Sub
+
+Sub shouldRemoveDirectoryWithContents()
+arrange:
+    Dim directoryToRemove As String
+    directoryToRemove = ThisDocument.path & "/foobar"
+    
+    On Error Resume Next
+    MkDir directoryToRemove
+    
+    Dim newDocument As Document
+    Set newDocument = Documents.Add
+    newDocument.SaveAs2 directoryToRemove & "/some.doc"
+    newDocument.Close
+    On Error GoTo 0
+    
+act:
+    removeDirectoryAndContents directoryToRemove
+    
+assert:
+    Debug.Assert Not exists(ThisDocument.path, "foobar")
+End Sub
+
+Private Sub shouldNotThrowErrorIfDirectoryToRemoveWasAlreadyRemoved()
+act:
+    removeDirectoryAndContents ThisDocument.path & "/directory/that/hopefully/does/not/exist"
+End Sub
+
+Private Sub shouldReadArgumentFromFile()
+arrange:
+    argumentExists "foo", "bar"
+    
+act:
+    Dim argumentValue As String
+    argumentValue = readArgumentFile("foo")
+    
+assert:
+    Debug.Assert argumentValue = "bar"
+End Sub
+
+Sub shouldReturnEmptyStringIfArgumentDoesNotExist()
+arrange:
+    Dim argsDirectory As String
+    argsDirectory = ThisDocument.path & "/.args"
+    removeDirectoryAndContents argsDirectory
+    
+act:
+    Dim argumentValue As String
+    argumentValue = readArgumentFile("foo")
+
+assert:
+    Debug.Assert argumentValue = ""
+End Sub
+
+Sub shouldClearArgumentFiles()
+arrange:
+    argumentExists "foo", "bar"
+
+act:
+    clearArguments
+    
+assert:
+    Debug.Assert Not exists(ThisDocument.path, ".args")
+End Sub
+
+Private Sub remove(directory As String)
+    On Error Resume Next
+    RmDir directory
+    On Error GoTo 0
+End Sub
+
+Private Function exists(parentDirectory As String, expectedFileSystemObject) As Boolean
+    Dim fileSystemObject As String
+    
+    fileSystemObject = Dir(parentDirectory, vbDirectory)
+    
+    Do Until fileSystemObject = ""
+        If fileSystemObject = expectedFileSystemObject Then
+            exists = True
+            Exit Function
+        End If
+        fileSystemObject = Dir
+    Loop
+    
+    exists = False
+End Function
+
+Private Sub argumentExists(name As String, value As String)
+    Dim argsDirectory As String
+    argsDirectory = ThisDocument.path & "/.args"
+    
+    On Error Resume Next
+    MkDir argsDirectory
+    Open argsDirectory & "/" & name For Output As #1
+    Print #1, value
+    Close #1
+    On Error GoTo 0
+End Sub
+

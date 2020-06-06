@@ -7,3 +7,4 @@ endDate="$3"
 ./sortGitChangesList.sh
 ./aggregateGitChanges.sh
 ./generateKUPreportData.sh
+./outputToPdf.sh "$startDate" "$endDate"
